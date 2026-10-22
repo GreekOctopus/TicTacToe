@@ -143,17 +143,39 @@ namespace TicTacToe.Tests
         }
 
         [Fact]
-        public void HardDifficulty_VariesOpeningMove()
+        public void HardDifficulty_OpensOnVariedCornerOrCentre()
         {
             var board = new Board();
+            var strongOpenings = new[] { (0, 0), (0, 2), (1, 1), (2, 0), (2, 2) };
             var openings = new HashSet<(int Row, int Col)>();
 
             for (int seed = 0; seed < 30; seed++)
             {
-                openings.Add(AiOpponent.GetBestMove(board, CellState.X, Difficulty.Hard, new Random(seed)));
+                var move = AiOpponent.GetBestMove(board, CellState.X, Difficulty.Hard, new Random(seed));
+                Assert.Contains((move.Row, move.Col), strongOpenings);
+                openings.Add(move);
             }
 
             Assert.True(openings.Count > 1, "Hard AI should not always open on the same cell.");
+        }
+
+        [Fact]
+        public void HardDifficulty_BreaksTiesBetweenEquallyGoodMoves()
+        {
+            // X in the centre: for O every corner draws and every edge loses
+            var board = new Board();
+            board.SetCell(1, 1, CellState.X);
+            var corners = new[] { (0, 0), (0, 2), (2, 0), (2, 2) };
+            var replies = new HashSet<(int Row, int Col)>();
+
+            for (int seed = 0; seed < 30; seed++)
+            {
+                var move = AiOpponent.GetBestMove(board, CellState.O, Difficulty.Hard, new Random(seed));
+                Assert.Contains((move.Row, move.Col), corners);
+                replies.Add(move);
+            }
+
+            Assert.True(replies.Count > 1, "Hard AI should vary between tied corner replies.");
         }
 
         [Fact]
@@ -205,14 +227,21 @@ namespace TicTacToe.Tests
             }
         }
 
+        // Tries every move the AI considers best, so the result doesn't depend on random tie-breaking.
         private static void PlayAiTurn(Board board, CellState aiPlayer, CellState humanPlayer)
         {
-            var move = AiOpponent.GetBestMove(board, aiPlayer, Difficulty.Hard);
-            Assert.True(board.SetCell(move.Row, move.Col, aiPlayer));
+            var bestMoves = AiOpponent.GetBestMoves(board, aiPlayer);
+            Assert.NotEmpty(bestMoves);
 
-            if (!board.CheckWin(out _) && !board.IsFull())
+            foreach (var move in bestMoves)
             {
-                PlayEveryHumanReply(board, aiPlayer, humanPlayer);
+                var next = board.Clone();
+                Assert.True(next.SetCell(move.Row, move.Col, aiPlayer));
+
+                if (!next.CheckWin(out _) && !next.IsFull())
+                {
+                    PlayEveryHumanReply(next, aiPlayer, humanPlayer);
+                }
             }
         }
     }

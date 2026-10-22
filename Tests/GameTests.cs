@@ -117,6 +117,38 @@ namespace TicTacToe.Tests
         }
 
         [Fact]
+        public void HumanVsAi_WithAiAsO_WaitsForHumanAfterStartAndReset()
+        {
+            var game = new Game(GameMode.HumanVsAi, Difficulty.Hard, CellState.O);
+            AssertBoardEmpty(game);
+            Assert.Equal(CellState.X, game.CurrentPlayer);
+
+            game.MakeMove(0, 0);
+            game.Reset();
+
+            AssertBoardEmpty(game);
+            Assert.Equal(CellState.X, game.CurrentPlayer);
+        }
+
+        [Fact]
+        public void Board_CannotBeCastBackToMutableBoard()
+        {
+            var game = new Game();
+            Assert.IsNotType<Board>(game.Board);
+        }
+
+        private static void AssertBoardEmpty(Game game)
+        {
+            for (int r = 0; r < Board.Size; r++)
+            {
+                for (int c = 0; c < Board.Size; c++)
+                {
+                    Assert.Equal(CellState.Empty, game.Board.GetCell(r, c));
+                }
+            }
+        }
+
+        [Fact]
         public void Reset_WithAiAsX_AiOpensAgain()
         {
             var game = new Game(GameMode.HumanVsAi, Difficulty.Easy, CellState.X, new Random(7));

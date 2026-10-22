@@ -5,10 +5,11 @@ namespace TicTacToe.Core
     public class Game
     {
         private readonly Random? _random;
-        private readonly Board _board = new Board();
+        private readonly Board _board;
+        private readonly IReadOnlyBoard _boardView;
 
-        // Read-only so moves can only be made through MakeMove / TriggerAiMove
-        public IReadOnlyBoard Board => _board;
+        // Read-only view so moves can only be made through MakeMove / TriggerAiMove
+        public IReadOnlyBoard Board => _boardView;
         public CellState CurrentPlayer { get; private set; }
         public GameMode Mode { get; private set; }
         public Difficulty AiDifficulty { get; private set; }
@@ -23,6 +24,8 @@ namespace TicTacToe.Core
                 throw new ArgumentException("AI player must be X or O in Human vs AI mode.", nameof(aiPlayer));
             }
 
+            _board = new Board();
+            _boardView = new ReadOnlyBoardView(_board);
             Mode = mode;
             AiDifficulty = aiDifficulty;
             AiPlayer = aiPlayer;

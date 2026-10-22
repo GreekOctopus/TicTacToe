@@ -4,6 +4,7 @@ namespace TicTacToe.Core
 {
     public class Board : IReadOnlyBoard
     {
+        // Fixed at 3: CheckWin and the console grid are written for a 3x3 board.
         public const int Size = 3;
 
         private readonly CellState[,] _grid = new CellState[Size, Size];

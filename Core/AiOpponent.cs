@@ -5,31 +5,41 @@ namespace TicTacToe.Core
 {
     public static class AiOpponent
     {
-        // Shared fallback so callers that pass no Random don't each create a new one
-        private static readonly Random _sharedRandom = new Random();
+        // Corners and centre: the openings that give an imperfect opponent the most ways to go wrong
+        private static readonly (int Row, int Col)[] StrongOpenings = { (0, 0), (0, 2), (1, 1), (2, 0), (2, 2) };
 
-        public static (int Row, int Col) GetBestMove(Board board, CellState aiPlayer, Difficulty difficulty, Random? random = null)
+        public static (int Row, int Col) GetBestMove(IReadOnlyBoard board, CellState aiPlayer, Difficulty difficulty, Random? random = null)
         {
             if (aiPlayer != CellState.X && aiPlayer != CellState.O)
             {
                 throw new ArgumentException("AI player must be X or O.", nameof(aiPlayer));
             }
 
-            random ??= _sharedRandom;
+            random ??= Random.Shared;
 
-            // On an empty board every opening leads to a draw with perfect play, so skip the full search
-            if (difficulty == Difficulty.Easy || IsEmpty(board))
+            if (difficulty == Difficulty.Easy)
             {
                 return GetRandomMove(board, random);
             }
-            else
+
+            // Every opening draws with perfect play, so skip the full search on an empty board
+            if (IsEmpty(board))
             {
-                // Search on a copy so the caller's board is never mutated
-                return GetMinimaxMove(board.Clone(), aiPlayer, random);
+                return StrongOpenings[random.Next(StrongOpenings.Length)];
             }
+
+            var bestMoves = GetBestMoves(board, aiPlayer);
+            return bestMoves.Count == 0 ? (-1, -1) : bestMoves[random.Next(bestMoves.Count)];
         }
 
-        private static bool IsEmpty(Board board)
+        // All moves that tie for the best minimax value; tests use this to cover every AI choice.
+        internal static List<(int Row, int Col)> GetBestMoves(IReadOnlyBoard board, CellState aiPlayer)
+        {
+            // Search on a copy so the caller's board is never mutated
+            return GetMinimaxMoves(board.Clone(), aiPlayer);
+        }
+
+        private static bool IsEmpty(IReadOnlyBoard board)
         {
             for (int r = 0; r < Board.Size; r++)
             {
@@ -44,7 +54,7 @@ namespace TicTacToe.Core
             return true;
         }
 
-        private static (int Row, int Col) GetRandomMove(Board board, Random random)
+        private static (int Row, int Col) GetRandomMove(IReadOnlyBoard board, Random random)
         {
             var emptyCells = new List<(int Row, int Col)>();
 
@@ -67,7 +77,7 @@ namespace TicTacToe.Core
             return emptyCells[random.Next(emptyCells.Count)];
         }
 
-        private static (int Row, int Col) GetMinimaxMove(Board board, CellState aiPlayer, Random random)
+        private static List<(int Row, int Col)> GetMinimaxMoves(Board board, CellState aiPlayer)
         {
             CellState opponentPlayer = (aiPlayer == CellState.X) ? CellState.O : CellState.X;
             int bestVal = int.MinValue;
@@ -102,7 +112,7 @@ namespace TicTacToe.Core
                 }
             }
 
-            return bestMoves.Count == 0 ? (-1, -1) : bestMoves[random.Next(bestMoves.Count)];
+            return bestMoves;
         }
 
         private static int Minimax(Board board, int depth, bool isMax, CellState aiPlayer, CellState opponentPlayer)
