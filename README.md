@@ -13,7 +13,7 @@ The solution contains three projects:
    - An interactive command-line interface to play the game.
    - Displays a cleanly rendered board with validation prompts and color indicators.
 3. **`TicTacToe.Tests` (xUnit Test Suite)**:
-   - 23 unit tests verifying board mechanics, game transitions, and AI decision-making.
+   - 32 unit tests verifying board mechanics, game transitions, and AI decision-making.
 
 ---
 
@@ -32,7 +32,7 @@ The solution contains three projects:
 - [.NET SDK 10.0](https://dotnet.microsoft.com/download) (or newer)
 
 ### Run Unit Tests
-To run all 23 automated tests:
+To run all 32 automated tests:
 ```bash
 dotnet test
 ```

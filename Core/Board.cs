@@ -1,61 +1,76 @@
-using System;
-
 namespace TicTacToe.Core
 {
     public class Board
     {
-        public CellState[,] Grid { get; private set; }
+        public const int Size = 3;
+
+        private readonly CellState[,] _grid = new CellState[Size, Size];
 
         public Board()
         {
-            Grid = new CellState[3, 3];
             Reset();
         }
 
         public void Reset()
         {
-            for (int r = 0; r < 3; r++)
+            for (int r = 0; r < Size; r++)
             {
-                for (int c = 0; c < 3; c++)
+                for (int c = 0; c < Size; c++)
                 {
-                    Grid[r, c] = CellState.Empty;
+                    _grid[r, c] = CellState.Empty;
                 }
             }
         }
 
         public bool SetCell(int row, int col, CellState state)
         {
-            if (row < 0 || row >= 3 || col < 0 || col >= 3)
+            if (!IsInBounds(row, col))
             {
                 return false;
             }
 
-            if (Grid[row, col] != CellState.Empty && state != CellState.Empty)
+            if (state == CellState.Empty)
+            {
+                return false; // Use ClearCell to undo a move
+            }
+
+            if (_grid[row, col] != CellState.Empty)
             {
                 return false; // Cell already occupied
             }
 
-            Grid[row, col] = state;
+            _grid[row, col] = state;
             return true;
+        }
+
+        // Only the engine (e.g. AI search on a cloned board) may undo moves.
+        internal void ClearCell(int row, int col)
+        {
+            _grid[row, col] = CellState.Empty;
         }
 
         public CellState GetCell(int row, int col)
         {
-            if (row < 0 || row >= 3 || col < 0 || col >= 3)
+            if (row < 0 || row >= Size)
             {
-                throw new ArgumentOutOfRangeException("Row or column is out of range.");
+                throw new ArgumentOutOfRangeException(nameof(row), row, $"Row must be between 0 and {Size - 1}.");
             }
 
-            return Grid[row, col];
+            if (col < 0 || col >= Size)
+            {
+                throw new ArgumentOutOfRangeException(nameof(col), col, $"Column must be between 0 and {Size - 1}.");
+            }
+
+            return _grid[row, col];
         }
 
         public bool IsFull()
         {
-            for (int r = 0; r < 3; r++)
+            for (int r = 0; r < Size; r++)
             {
-                for (int c = 0; c < 3; c++)
+                for (int c = 0; c < Size; c++)
                 {
-                    if (Grid[r, c] == CellState.Empty)
+                    if (_grid[r, c] == CellState.Empty)
                     {
                         return false;
                     }
@@ -69,44 +84,44 @@ namespace TicTacToe.Core
             winner = CellState.Empty;
 
             // Check rows
-            for (int r = 0; r < 3; r++)
+            for (int r = 0; r < Size; r++)
             {
-                if (Grid[r, 0] != CellState.Empty &&
-                    Grid[r, 0] == Grid[r, 1] &&
-                    Grid[r, 1] == Grid[r, 2])
+                if (_grid[r, 0] != CellState.Empty &&
+                    _grid[r, 0] == _grid[r, 1] &&
+                    _grid[r, 1] == _grid[r, 2])
                 {
-                    winner = Grid[r, 0];
+                    winner = _grid[r, 0];
                     return true;
                 }
             }
 
             // Check columns
-            for (int c = 0; c < 3; c++)
+            for (int c = 0; c < Size; c++)
             {
-                if (Grid[0, c] != CellState.Empty &&
-                    Grid[0, c] == Grid[1, c] &&
-                    Grid[1, c] == Grid[2, c])
+                if (_grid[0, c] != CellState.Empty &&
+                    _grid[0, c] == _grid[1, c] &&
+                    _grid[1, c] == _grid[2, c])
                 {
-                    winner = Grid[0, c];
+                    winner = _grid[0, c];
                     return true;
                 }
             }
 
             // Check main diagonal
-            if (Grid[0, 0] != CellState.Empty &&
-                Grid[0, 0] == Grid[1, 1] &&
-                Grid[1, 1] == Grid[2, 2])
+            if (_grid[0, 0] != CellState.Empty &&
+                _grid[0, 0] == _grid[1, 1] &&
+                _grid[1, 1] == _grid[2, 2])
             {
-                winner = Grid[0, 0];
+                winner = _grid[0, 0];
                 return true;
             }
 
             // Check anti-diagonal
-            if (Grid[0, 2] != CellState.Empty &&
-                Grid[0, 2] == Grid[1, 1] &&
-                Grid[1, 1] == Grid[2, 0])
+            if (_grid[0, 2] != CellState.Empty &&
+                _grid[0, 2] == _grid[1, 1] &&
+                _grid[1, 1] == _grid[2, 0])
             {
-                winner = Grid[0, 2];
+                winner = _grid[0, 2];
                 return true;
             }
 
@@ -116,14 +131,13 @@ namespace TicTacToe.Core
         public Board Clone()
         {
             var clone = new Board();
-            for (int r = 0; r < 3; r++)
-            {
-                for (int c = 0; c < 3; c++)
-                {
-                    clone.Grid[r, c] = this.Grid[r, c];
-                }
-            }
+            Array.Copy(_grid, clone._grid, _grid.Length);
             return clone;
+        }
+
+        private static bool IsInBounds(int row, int col)
+        {
+            return row >= 0 && row < Size && col >= 0 && col < Size;
         }
     }
 }

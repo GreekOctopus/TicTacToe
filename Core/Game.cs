@@ -1,9 +1,9 @@
-using System;
-
 namespace TicTacToe.Core
 {
     public class Game
     {
+        private readonly Random? _random;
+
         public Board Board { get; private set; }
         public CellState CurrentPlayer { get; private set; }
         public GameMode Mode { get; private set; }
@@ -12,12 +12,18 @@ namespace TicTacToe.Core
         public bool IsGameOver { get; private set; }
         public CellState Winner { get; private set; }
 
-        public Game(GameMode mode = GameMode.HumanVsHuman, Difficulty aiDifficulty = Difficulty.Easy, CellState aiPlayer = CellState.O)
+        public Game(GameMode mode = GameMode.HumanVsHuman, Difficulty aiDifficulty = Difficulty.Easy, CellState aiPlayer = CellState.O, Random? random = null)
         {
+            if (mode == GameMode.HumanVsAi && aiPlayer == CellState.Empty)
+            {
+                throw new ArgumentException("AI player must be X or O in Human vs AI mode.", nameof(aiPlayer));
+            }
+
             Board = new Board();
             Mode = mode;
             AiDifficulty = aiDifficulty;
             AiPlayer = aiPlayer;
+            _random = random;
             Reset();
         }
 
@@ -27,6 +33,9 @@ namespace TicTacToe.Core
             CurrentPlayer = CellState.X;
             IsGameOver = false;
             Winner = CellState.Empty;
+
+            // If the AI plays X it opens the game
+            TriggerAiMove();
         }
 
         public bool MakeMove(int row, int col)
@@ -48,10 +57,7 @@ namespace TicTacToe.Core
             }
 
             // If game is not over and it's the AI's turn, run AI move immediately
-            if (!IsGameOver && Mode == GameMode.HumanVsAi && CurrentPlayer == AiPlayer)
-            {
-                TriggerAiMove();
-            }
+            TriggerAiMove();
 
             return true;
         }
@@ -63,7 +69,7 @@ namespace TicTacToe.Core
                 return false;
             }
 
-            var (row, col) = AiOpponent.GetBestMove(Board, AiPlayer, AiDifficulty);
+            var (row, col) = AiOpponent.GetBestMove(Board, AiPlayer, AiDifficulty, _random);
             if (row != -1 && col != -1)
             {
                 return ApplyMove(row, col);

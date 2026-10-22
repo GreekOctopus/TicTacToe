@@ -1,13 +1,8 @@
-using System;
-using System.Collections.Generic;
-
 namespace TicTacToe.Core
 {
-    public class AiOpponent
+    public static class AiOpponent
     {
-        private static readonly Random _random = new Random();
-
-        public static (int Row, int Col) GetBestMove(Board board, CellState aiPlayer, Difficulty difficulty)
+        public static (int Row, int Col) GetBestMove(Board board, CellState aiPlayer, Difficulty difficulty, Random? random = null)
         {
             if (aiPlayer == CellState.Empty)
             {
@@ -16,21 +11,22 @@ namespace TicTacToe.Core
 
             if (difficulty == Difficulty.Easy)
             {
-                return GetRandomMove(board);
+                return GetRandomMove(board, random ?? new Random());
             }
             else
             {
-                return GetMinimaxMove(board, aiPlayer);
+                // Search on a copy so the caller's board is never mutated
+                return GetMinimaxMove(board.Clone(), aiPlayer);
             }
         }
 
-        private static (int Row, int Col) GetRandomMove(Board board)
+        private static (int Row, int Col) GetRandomMove(Board board, Random random)
         {
             var emptyCells = new List<(int Row, int Col)>();
 
-            for (int r = 0; r < 3; r++)
+            for (int r = 0; r < Board.Size; r++)
             {
-                for (int c = 0; c < 3; c++)
+                for (int c = 0; c < Board.Size; c++)
                 {
                     if (board.GetCell(r, c) == CellState.Empty)
                     {
@@ -44,7 +40,7 @@ namespace TicTacToe.Core
                 return (-1, -1);
             }
 
-            return emptyCells[_random.Next(emptyCells.Count)];
+            return emptyCells[random.Next(emptyCells.Count)];
         }
 
         private static (int Row, int Col) GetMinimaxMove(Board board, CellState aiPlayer)
@@ -53,9 +49,9 @@ namespace TicTacToe.Core
             int bestVal = int.MinValue;
             (int Row, int Col) bestMove = (-1, -1);
 
-            for (int r = 0; r < 3; r++)
+            for (int r = 0; r < Board.Size; r++)
             {
-                for (int c = 0; c < 3; c++)
+                for (int c = 0; c < Board.Size; c++)
                 {
                     if (board.GetCell(r, c) == CellState.Empty)
                     {
@@ -66,7 +62,7 @@ namespace TicTacToe.Core
                         int moveVal = Minimax(board, 0, false, aiPlayer, opponentPlayer);
 
                         // Undo the move
-                        board.SetCell(r, c, CellState.Empty);
+                        board.ClearCell(r, c);
 
                         // If the value of the current move is more than the best value, update best move
                         if (moveVal > bestVal)
@@ -103,15 +99,15 @@ namespace TicTacToe.Core
             if (isMax)
             {
                 int best = int.MinValue;
-                for (int r = 0; r < 3; r++)
+                for (int r = 0; r < Board.Size; r++)
                 {
-                    for (int c = 0; c < 3; c++)
+                    for (int c = 0; c < Board.Size; c++)
                     {
                         if (board.GetCell(r, c) == CellState.Empty)
                         {
                             board.SetCell(r, c, aiPlayer);
                             best = Math.Max(best, Minimax(board, depth + 1, false, aiPlayer, opponentPlayer));
-                            board.SetCell(r, c, CellState.Empty);
+                            board.ClearCell(r, c);
                         }
                     }
                 }
@@ -120,15 +116,15 @@ namespace TicTacToe.Core
             else
             {
                 int best = int.MaxValue;
-                for (int r = 0; r < 3; r++)
+                for (int r = 0; r < Board.Size; r++)
                 {
-                    for (int c = 0; c < 3; c++)
+                    for (int c = 0; c < Board.Size; c++)
                     {
                         if (board.GetCell(r, c) == CellState.Empty)
                         {
                             board.SetCell(r, c, opponentPlayer);
                             best = Math.Min(best, Minimax(board, depth + 1, true, aiPlayer, opponentPlayer));
-                            board.SetCell(r, c, CellState.Empty);
+                            board.ClearCell(r, c);
                         }
                     }
                 }

@@ -1,4 +1,3 @@
-using System;
 using TicTacToe.Core;
 
 namespace TicTacToe.ConsoleApp
@@ -30,13 +29,8 @@ namespace TicTacToe.ConsoleApp
                     aiPlayer = ChooseAiSymbol();
                 }
 
+                // If AI goes first (X), the game makes its opening move
                 Game game = new Game(mode, difficulty, aiPlayer);
-                
-                // If AI goes first (X), trigger the first move
-                if (mode == GameMode.HumanVsAi && aiPlayer == CellState.X)
-                {
-                    game.TriggerAiMove();
-                }
 
                 bool inGameLoop = true;
                 string statusMessage = "";
@@ -94,9 +88,9 @@ namespace TicTacToe.ConsoleApp
                     int row = rowInput - 1;
                     int col = colInput - 1;
 
-                    if (row < 0 || row >= 3 || col < 0 || col >= 3)
+                    if (row < 0 || row >= Board.Size || col < 0 || col >= Board.Size)
                     {
-                        statusMessage = "Coordinates must be between 1 and 3.";
+                        statusMessage = $"Coordinates must be between 1 and {Board.Size}.";
                         continue;
                     }
 
@@ -109,7 +103,7 @@ namespace TicTacToe.ConsoleApp
 
                 Console.WriteLine();
                 Console.Write("Would you like to play again? (y/n): ");
-                string? playAgainInput = Console.ReadLine()?.Trim().ToLower();
+                string? playAgainInput = Console.ReadLine()?.Trim().ToLowerInvariant();
                 if (playAgainInput != "y" && playAgainInput != "yes")
                 {
                     keepPlayingApp = false;
