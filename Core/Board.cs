@@ -1,6 +1,8 @@
+using System;
+
 namespace TicTacToe.Core
 {
-    public class Board
+    public class Board : IReadOnlyBoard
     {
         public const int Size = 3;
 

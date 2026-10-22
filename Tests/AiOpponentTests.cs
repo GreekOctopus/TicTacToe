@@ -128,14 +128,38 @@ namespace TicTacToe.Tests
         }
 
         [Fact]
-        public void EasyDifficulty_SameSeed_PicksSameMove()
+        public void EasyDifficulty_SameSeed_PicksSameMoveSequence()
         {
             var board = new Board();
+            var firstRandom = new Random(42);
+            var secondRandom = new Random(42);
 
-            var first = AiOpponent.GetBestMove(board, CellState.O, Difficulty.Easy, new Random(42));
-            var second = AiOpponent.GetBestMove(board, CellState.O, Difficulty.Easy, new Random(42));
+            for (int i = 0; i < 10; i++)
+            {
+                var first = AiOpponent.GetBestMove(board, CellState.O, Difficulty.Easy, firstRandom);
+                var second = AiOpponent.GetBestMove(board, CellState.O, Difficulty.Easy, secondRandom);
+                Assert.Equal(first, second);
+            }
+        }
 
-            Assert.Equal(first, second);
+        [Fact]
+        public void HardDifficulty_VariesOpeningMove()
+        {
+            var board = new Board();
+            var openings = new HashSet<(int Row, int Col)>();
+
+            for (int seed = 0; seed < 30; seed++)
+            {
+                openings.Add(AiOpponent.GetBestMove(board, CellState.X, Difficulty.Hard, new Random(seed)));
+            }
+
+            Assert.True(openings.Count > 1, "Hard AI should not always open on the same cell.");
+        }
+
+        [Fact]
+        public void HardDifficulty_InvalidAiPlayer_Throws()
+        {
+            Assert.Throws<ArgumentException>(() => AiOpponent.GetBestMove(new Board(), (CellState)3, Difficulty.Hard));
         }
 
         [Theory]

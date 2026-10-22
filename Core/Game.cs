@@ -1,10 +1,14 @@
+using System;
+
 namespace TicTacToe.Core
 {
     public class Game
     {
         private readonly Random? _random;
+        private readonly Board _board = new Board();
 
-        public Board Board { get; private set; }
+        // Read-only so moves can only be made through MakeMove / TriggerAiMove
+        public IReadOnlyBoard Board => _board;
         public CellState CurrentPlayer { get; private set; }
         public GameMode Mode { get; private set; }
         public Difficulty AiDifficulty { get; private set; }
@@ -14,12 +18,11 @@ namespace TicTacToe.Core
 
         public Game(GameMode mode = GameMode.HumanVsHuman, Difficulty aiDifficulty = Difficulty.Easy, CellState aiPlayer = CellState.O, Random? random = null)
         {
-            if (mode == GameMode.HumanVsAi && aiPlayer == CellState.Empty)
+            if (mode == GameMode.HumanVsAi && aiPlayer != CellState.X && aiPlayer != CellState.O)
             {
                 throw new ArgumentException("AI player must be X or O in Human vs AI mode.", nameof(aiPlayer));
             }
 
-            Board = new Board();
             Mode = mode;
             AiDifficulty = aiDifficulty;
             AiPlayer = aiPlayer;
@@ -29,7 +32,7 @@ namespace TicTacToe.Core
 
         public void Reset()
         {
-            Board.Reset();
+            _board.Reset();
             CurrentPlayer = CellState.X;
             IsGameOver = false;
             Winner = CellState.Empty;
@@ -69,7 +72,7 @@ namespace TicTacToe.Core
                 return false;
             }
 
-            var (row, col) = AiOpponent.GetBestMove(Board, AiPlayer, AiDifficulty, _random);
+            var (row, col) = AiOpponent.GetBestMove(_board, AiPlayer, AiDifficulty, _random);
             if (row != -1 && col != -1)
             {
                 return ApplyMove(row, col);
@@ -80,17 +83,17 @@ namespace TicTacToe.Core
 
         private bool ApplyMove(int row, int col)
         {
-            if (!Board.SetCell(row, col, CurrentPlayer))
+            if (!_board.SetCell(row, col, CurrentPlayer))
             {
                 return false;
             }
 
-            if (Board.CheckWin(out CellState winner))
+            if (_board.CheckWin(out CellState winner))
             {
                 Winner = winner;
                 IsGameOver = true;
             }
-            else if (Board.IsFull())
+            else if (_board.IsFull())
             {
                 Winner = CellState.Empty;
                 IsGameOver = true;

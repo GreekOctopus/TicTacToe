@@ -96,6 +96,27 @@ namespace TicTacToe.Tests
         }
 
         [Fact]
+        public void HumanVsAi_WithUndefinedAiPlayer_Throws()
+        {
+            Assert.Throws<ArgumentException>(() => new Game(GameMode.HumanVsAi, Difficulty.Easy, (CellState)3));
+        }
+
+        [Fact]
+        public void HumanVsAi_SameSeed_SameAiOpening()
+        {
+            var first = new Game(GameMode.HumanVsAi, Difficulty.Hard, CellState.X, new Random(123));
+            var second = new Game(GameMode.HumanVsAi, Difficulty.Hard, CellState.X, new Random(123));
+
+            for (int r = 0; r < Board.Size; r++)
+            {
+                for (int c = 0; c < Board.Size; c++)
+                {
+                    Assert.Equal(first.Board.GetCell(r, c), second.Board.GetCell(r, c));
+                }
+            }
+        }
+
+        [Fact]
         public void Reset_WithAiAsX_AiOpensAgain()
         {
             var game = new Game(GameMode.HumanVsAi, Difficulty.Easy, CellState.X, new Random(7));

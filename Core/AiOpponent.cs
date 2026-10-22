@@ -1,23 +1,47 @@
+using System;
+using System.Collections.Generic;
+
 namespace TicTacToe.Core
 {
     public static class AiOpponent
     {
+        // Shared fallback: a fresh Random per call can repeat seeds on Mono/Unity (tick-based seeding)
+        private static readonly Random _sharedRandom = new Random();
+
         public static (int Row, int Col) GetBestMove(Board board, CellState aiPlayer, Difficulty difficulty, Random? random = null)
         {
-            if (aiPlayer == CellState.Empty)
+            if (aiPlayer != CellState.X && aiPlayer != CellState.O)
             {
-                throw new ArgumentException("AI player state cannot be Empty.", nameof(aiPlayer));
+                throw new ArgumentException("AI player must be X or O.", nameof(aiPlayer));
             }
 
-            if (difficulty == Difficulty.Easy)
+            random ??= _sharedRandom;
+
+            // On an empty board every opening leads to a draw with perfect play, so skip the full search
+            if (difficulty == Difficulty.Easy || IsEmpty(board))
             {
-                return GetRandomMove(board, random ?? new Random());
+                return GetRandomMove(board, random);
             }
             else
             {
                 // Search on a copy so the caller's board is never mutated
-                return GetMinimaxMove(board.Clone(), aiPlayer);
+                return GetMinimaxMove(board.Clone(), aiPlayer, random);
             }
+        }
+
+        private static bool IsEmpty(Board board)
+        {
+            for (int r = 0; r < Board.Size; r++)
+            {
+                for (int c = 0; c < Board.Size; c++)
+                {
+                    if (board.GetCell(r, c) != CellState.Empty)
+                    {
+                        return false;
+                    }
+                }
+            }
+            return true;
         }
 
         private static (int Row, int Col) GetRandomMove(Board board, Random random)
@@ -43,11 +67,11 @@ namespace TicTacToe.Core
             return emptyCells[random.Next(emptyCells.Count)];
         }
 
-        private static (int Row, int Col) GetMinimaxMove(Board board, CellState aiPlayer)
+        private static (int Row, int Col) GetMinimaxMove(Board board, CellState aiPlayer, Random random)
         {
             CellState opponentPlayer = (aiPlayer == CellState.X) ? CellState.O : CellState.X;
             int bestVal = int.MinValue;
-            (int Row, int Col) bestMove = (-1, -1);
+            var bestMoves = new List<(int Row, int Col)>();
 
             for (int r = 0; r < Board.Size; r++)
             {
@@ -64,17 +88,21 @@ namespace TicTacToe.Core
                         // Undo the move
                         board.ClearCell(r, c);
 
-                        // If the value of the current move is more than the best value, update best move
+                        // Keep every move that ties for the best value, so play isn't predictable
                         if (moveVal > bestVal)
                         {
                             bestVal = moveVal;
-                            bestMove = (r, c);
+                            bestMoves.Clear();
+                        }
+                        if (moveVal == bestVal)
+                        {
+                            bestMoves.Add((r, c));
                         }
                     }
                 }
             }
 
-            return bestMove;
+            return bestMoves.Count == 0 ? (-1, -1) : bestMoves[random.Next(bestMoves.Count)];
         }
 
         private static int Minimax(Board board, int depth, bool isMax, CellState aiPlayer, CellState opponentPlayer)

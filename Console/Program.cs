@@ -169,7 +169,7 @@ namespace TicTacToe.ConsoleApp
             }
         }
 
-        private static void DrawBoard(Board board)
+        private static void DrawBoard(IReadOnlyBoard board)
         {
             SafeClear();
             Console.ForegroundColor = ConsoleColor.Cyan;
