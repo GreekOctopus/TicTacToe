@@ -5,7 +5,7 @@ namespace TicTacToe.Core
 {
     public static class AiOpponent
     {
-        // Shared fallback: a fresh Random per call can repeat seeds on Mono/Unity (tick-based seeding)
+        // Shared fallback so callers that pass no Random don't each create a new one
         private static readonly Random _sharedRandom = new Random();
 
         public static (int Row, int Col) GetBestMove(Board board, CellState aiPlayer, Difficulty difficulty, Random? random = null)
