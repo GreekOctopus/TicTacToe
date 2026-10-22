@@ -90,6 +90,90 @@ namespace TicTacToe.Tests
         }
 
         [Fact]
+        public void HumanVsAi_WithEmptyAiPlayer_Throws()
+        {
+            Assert.Throws<ArgumentException>(() => new Game(GameMode.HumanVsAi, Difficulty.Easy, CellState.Empty));
+        }
+
+        [Fact]
+        public void HumanVsAi_WithUndefinedAiPlayer_Throws()
+        {
+            Assert.Throws<ArgumentException>(() => new Game(GameMode.HumanVsAi, Difficulty.Easy, (CellState)3));
+        }
+
+        [Fact]
+        public void HumanVsAi_SameSeed_SameAiOpening()
+        {
+            var first = new Game(GameMode.HumanVsAi, Difficulty.Hard, CellState.X, new Random(123));
+            var second = new Game(GameMode.HumanVsAi, Difficulty.Hard, CellState.X, new Random(123));
+
+            for (int r = 0; r < Board.Size; r++)
+            {
+                for (int c = 0; c < Board.Size; c++)
+                {
+                    Assert.Equal(first.Board.GetCell(r, c), second.Board.GetCell(r, c));
+                }
+            }
+        }
+
+        [Fact]
+        public void HumanVsAi_WithAiAsO_WaitsForHumanAfterStartAndReset()
+        {
+            var game = new Game(GameMode.HumanVsAi, Difficulty.Hard, CellState.O);
+            AssertBoardEmpty(game);
+            Assert.Equal(CellState.X, game.CurrentPlayer);
+
+            game.MakeMove(0, 0);
+            game.Reset();
+
+            AssertBoardEmpty(game);
+            Assert.Equal(CellState.X, game.CurrentPlayer);
+        }
+
+        [Fact]
+        public void Board_CannotBeCastBackToMutableBoard()
+        {
+            var game = new Game();
+            Assert.IsNotType<Board>(game.Board);
+        }
+
+        private static void AssertBoardEmpty(Game game)
+        {
+            for (int r = 0; r < Board.Size; r++)
+            {
+                for (int c = 0; c < Board.Size; c++)
+                {
+                    Assert.Equal(CellState.Empty, game.Board.GetCell(r, c));
+                }
+            }
+        }
+
+        [Fact]
+        public void Reset_WithAiAsX_AiOpensAgain()
+        {
+            var game = new Game(GameMode.HumanVsAi, Difficulty.Easy, CellState.X, new Random(7));
+            // Human (O) plays the centre, or the top-middle if the AI already took the centre
+            var (row, col) = game.Board.GetCell(1, 1) == CellState.Empty ? (1, 1) : (0, 1);
+            Assert.True(game.MakeMove(row, col));
+
+            game.Reset();
+
+            int xCount = 0;
+            for (int r = 0; r < Board.Size; r++)
+            {
+                for (int c = 0; c < Board.Size; c++)
+                {
+                    if (game.Board.GetCell(r, c) == CellState.X)
+                    {
+                        xCount++;
+                    }
+                }
+            }
+            Assert.Equal(1, xCount);
+            Assert.Equal(CellState.O, game.CurrentPlayer);
+        }
+
+        [Fact]
         public void Reset_ClearsStateAndSetsTurnToX()
         {
             var game = new Game(GameMode.HumanVsHuman);

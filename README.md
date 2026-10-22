@@ -13,7 +13,7 @@ The solution contains three projects:
    - An interactive command-line interface to play the game.
    - Displays a cleanly rendered board with validation prompts and color indicators.
 3. **`TicTacToe.Tests` (xUnit Test Suite)**:
-   - 23 unit tests verifying board mechanics, game transitions, and AI decision-making.
+   - 39 unit tests verifying board mechanics, game transitions, and AI decision-making.
 
 ---
 
@@ -32,7 +32,7 @@ The solution contains three projects:
 - [.NET SDK 10.0](https://dotnet.microsoft.com/download) (or newer)
 
 ### Run Unit Tests
-To run all 23 automated tests:
+To run all 39 automated tests:
 ```bash
 dotnet test
 ```
@@ -47,3 +47,10 @@ dotnet run --project Console
 To use this engine in a Unity project:
 1. Copy all `.cs` files inside `Core/` into your Unity `Assets/Scripts/` folder.
 2. Reference the `TicTacToe.Core` namespace in your MonoBehaviour scripts to drive visual game events (like spawning 3D assets or detecting clicks).
+
+### API changes
+- `Game.Board` is a read-only `IReadOnlyBoard` view: read cells with `GetCell`, and make moves only through `Game.MakeMove`. `Board.Grid` has been removed.
+- `AiOpponent` is now a `static class`, and `GetBestMove` accepts any `IReadOnlyBoard` (so `game.Board` can be passed directly for a move hint).
+- When the AI plays X, `new Game(...)` and `Reset()` make the AI's opening move themselves. Redraw your UI from `game.Board` after creating or resetting a game rather than waiting for `TriggerAiMove()`, which returns `false` at that point.
+- `Board.SetCell(r, c, CellState.Empty)` now returns `false` and doesn't clear the cell.
+- Pass a seeded `Random` to `Game` or `AiOpponent.GetBestMove` for repeatable AI play (useful in tests and replays).

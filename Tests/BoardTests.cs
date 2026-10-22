@@ -58,6 +58,40 @@ namespace TicTacToe.Tests
         }
 
         [Fact]
+        public void SetCell_WithEmpty_DoesNotClearCell()
+        {
+            var board = new Board();
+            board.SetCell(1, 1, CellState.X);
+
+            Assert.False(board.SetCell(1, 1, CellState.Empty));
+            Assert.Equal(CellState.X, board.GetCell(1, 1));
+        }
+
+        [Fact]
+        public void GetCell_OutOfBounds_ReportsOffendingParameter()
+        {
+            var board = new Board();
+            var rowEx = Assert.Throws<ArgumentOutOfRangeException>(() => board.GetCell(3, 0));
+            var colEx = Assert.Throws<ArgumentOutOfRangeException>(() => board.GetCell(0, -1));
+
+            Assert.Equal("row", rowEx.ParamName);
+            Assert.Equal("col", colEx.ParamName);
+        }
+
+        [Fact]
+        public void Clone_CopiesStateAndIsIndependent()
+        {
+            var board = new Board();
+            board.SetCell(0, 0, CellState.X);
+
+            var clone = board.Clone();
+            clone.SetCell(2, 2, CellState.O);
+
+            Assert.Equal(CellState.X, clone.GetCell(0, 0));
+            Assert.Equal(CellState.Empty, board.GetCell(2, 2));
+        }
+
+        [Fact]
         public void IsFull_ReturnsTrue_OnlyWhenFull()
         {
             var board = new Board();

@@ -4,7 +4,12 @@ namespace TicTacToe.Core
 {
     public class Game
     {
-        public Board Board { get; private set; }
+        private readonly Random? _random;
+        private readonly Board _board;
+        private readonly IReadOnlyBoard _boardView;
+
+        // Read-only view so moves can only be made through MakeMove / TriggerAiMove
+        public IReadOnlyBoard Board => _boardView;
         public CellState CurrentPlayer { get; private set; }
         public GameMode Mode { get; private set; }
         public Difficulty AiDifficulty { get; private set; }
@@ -12,21 +17,31 @@ namespace TicTacToe.Core
         public bool IsGameOver { get; private set; }
         public CellState Winner { get; private set; }
 
-        public Game(GameMode mode = GameMode.HumanVsHuman, Difficulty aiDifficulty = Difficulty.Easy, CellState aiPlayer = CellState.O)
+        public Game(GameMode mode = GameMode.HumanVsHuman, Difficulty aiDifficulty = Difficulty.Easy, CellState aiPlayer = CellState.O, Random? random = null)
         {
-            Board = new Board();
+            if (mode == GameMode.HumanVsAi && aiPlayer != CellState.X && aiPlayer != CellState.O)
+            {
+                throw new ArgumentException("AI player must be X or O in Human vs AI mode.", nameof(aiPlayer));
+            }
+
+            _board = new Board();
+            _boardView = new ReadOnlyBoardView(_board);
             Mode = mode;
             AiDifficulty = aiDifficulty;
             AiPlayer = aiPlayer;
+            _random = random;
             Reset();
         }
 
         public void Reset()
         {
-            Board.Reset();
+            _board.Reset();
             CurrentPlayer = CellState.X;
             IsGameOver = false;
             Winner = CellState.Empty;
+
+            // If the AI plays X it opens the game
+            TriggerAiMove();
         }
 
         public bool MakeMove(int row, int col)
@@ -48,10 +63,7 @@ namespace TicTacToe.Core
             }
 
             // If game is not over and it's the AI's turn, run AI move immediately
-            if (!IsGameOver && Mode == GameMode.HumanVsAi && CurrentPlayer == AiPlayer)
-            {
-                TriggerAiMove();
-            }
+            TriggerAiMove();
 
             return true;
         }
@@ -63,7 +75,7 @@ namespace TicTacToe.Core
                 return false;
             }
 
-            var (row, col) = AiOpponent.GetBestMove(Board, AiPlayer, AiDifficulty);
+            var (row, col) = AiOpponent.GetBestMove(_board, AiPlayer, AiDifficulty, _random);
             if (row != -1 && col != -1)
             {
                 return ApplyMove(row, col);
@@ -74,17 +86,17 @@ namespace TicTacToe.Core
 
         private bool ApplyMove(int row, int col)
         {
-            if (!Board.SetCell(row, col, CurrentPlayer))
+            if (!_board.SetCell(row, col, CurrentPlayer))
             {
                 return false;
             }
 
-            if (Board.CheckWin(out CellState winner))
+            if (_board.CheckWin(out CellState winner))
             {
                 Winner = winner;
                 IsGameOver = true;
             }
-            else if (Board.IsFull())
+            else if (_board.IsFull())
             {
                 Winner = CellState.Empty;
                 IsGameOver = true;
